@@ -61,9 +61,6 @@ public class SearchResultsForm extends JFrame {
         scpMain.getViewport().setBackground(Color.WHITE);
         table.setBackground(Color.WHITE);
 
-        KeyDispatcher ThisKeyDispatcher = new KeyDispatcher();
-        KeyboardFocusManager ThisKbFocusMngr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        ThisKbFocusMngr.addKeyEventDispatcher(ThisKeyDispatcher);
         //return ThisKeyDispatcher;
 
         table.addMouseListener(new MouseAdapter() {

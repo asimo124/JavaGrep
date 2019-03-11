@@ -54,9 +54,6 @@ public class MainSearchForm extends JFrame {
 
         loadDropdowns();
 
-        KeyDispatcher ThisKeyDispatcher = new KeyDispatcher();
-        KeyboardFocusManager ThisKbFocusMngr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        ThisKbFocusMngr.addKeyEventDispatcher(ThisKeyDispatcher);
         //return ThisKeyDispatcher;
 
         //changeFileType("CSS");
@@ -79,7 +76,159 @@ public class MainSearchForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                runSearch();
+                System.out.println("search type: " + SearchCommand.SearchType);
+                System.out.println("keyword: " +  txtKeyword.getText());
+                if (SearchCommand.SearchType.equals("Text in Files")) { // if is text search
+
+                    if (!txtKeyword.getText().equals("")) { // if entered search keyword
+
+                        System.out.println("keyword: " +  txtKeyword.getText());
+                        List<File> FilesSearched = new ArrayList<>();
+                        if (SearchCommand.FileType.equals("ALL") || SearchCommand.FileType.equals("*")) {
+
+                            System.out.println("equals ALL");
+
+                            SearchCommand.FileType = "*";
+
+                            System.out.println("SearchCommand.FolderPath: " + SearchCommand.FolderPath);
+                            File file = new File(SearchCommand.FolderPath);
+                            FilesSearched = addFiles(null, file);
+
+                        } else {
+                            File file = new File(SearchCommand.FolderPath);
+                            FilesSearched = addFiles(null, file, SearchCommand.FileType.toLowerCase());
+                        }
+                        int counter = 1;
+
+                        SearchResultsTableModel TableModel = new SearchResultsTableModel();
+                        List<List<Object>> resultsArr = new ArrayList<>();
+                        System.out.println("files.count: " + FilesSearched.size());
+                        for (File getFile : FilesSearched) {
+
+                            int lines_count2 = 1;
+                            int lines_count_all = 1;
+                            try (BufferedReader br = new BufferedReader(new FileReader(getFile))) {
+                                int modelCount = 0;
+                                for (String line; (line = br.readLine()) != null; ) {
+                                    if (modelCount == 0) {
+
+                                    }
+                                    //System.out.println("is checking match: " + txtKeyword.getText());
+                                    boolean isMatch = false;
+                                    if (SearchCommand.IsRegex) {
+                                        if (SearchCommand.IsCaseSensitive) {
+                                            Pattern use_pattern = Pattern.compile(".*" + txtKeyword.getText() + ".*");
+                                            isMatch = (use_pattern.matches(".*" + txtKeyword.getText() + ".*", line));
+                                        } else {
+                                            Pattern use_pattern = Pattern.compile(".*" + txtKeyword.getText() + ".*", Pattern.CASE_INSENSITIVE);
+                                            isMatch = (use_pattern.matches(".*" + txtKeyword.getText() + ".*", line));
+                                        }
+                                    } else {
+                                        if (SearchCommand.IsCaseSensitive) {
+                                            isMatch = (line.contains(txtKeyword.getText()));
+                                        } else {
+                                            isMatch = (line.toLowerCase().contains(txtKeyword.getText().toLowerCase()));
+                                        }
+                                    }
+                                    if (isMatch) {
+
+                                        System.out.println("found match");
+
+                                        List<Object> eachObject = new ArrayList<>();
+
+                                        eachObject.add(getFile.getAbsolutePath());
+
+                                        if (SearchCommand.OnlyFileNames == false) {  // if want to see found lines
+                                            eachObject.add(line);
+                                        } else {
+                                            eachObject.add("");
+                                        }
+                                        eachObject.add(lines_count_all);
+
+                                        //System.out.println("abs_file: " + getFile.getAbsoluteFile());
+
+                                        eachObject.add(getFile.getParent());
+                                        resultsArr.add(eachObject);
+
+                                        modelCount++;
+                                        lines_count2++;
+                                        counter++;
+
+                                    } else {
+
+
+                                    }
+                                    lines_count_all++;
+                                }
+                            } catch (IOException eIO) {
+                                System.out.println(eIO.getMessage());
+                            }
+                        }
+                        SearchCommand.dataModel = resultsArr;
+                        SearchCommand.convertDataModel();
+
+                        if (NavFrames.SearchResultsFrame != null) {
+                            NavFrames.SearchResultsFrame.dispose();
+                        }
+                        NavFrames.SearchResultsFrame = new SearchResultsForm("Search Results");
+                    } else {
+                        JOptionPane.showMessageDialog(MainSearchForm.this, "You did not enter a Search Keyword.");
+                    }
+
+                } else {  // if searching names of files
+
+                    List<File> FilesSearched = new ArrayList<>();
+                    if (SearchCommand.FileType.equals("ALL") || SearchCommand.FileType.equals("*")) {
+
+                        SearchCommand.FileType = "*";
+                        File file = new File(SearchCommand.FolderPath);
+                        FilesSearched = addFiles(null, file);
+
+                    } else {
+                        File file = new File(SearchCommand.FolderPath);
+                        FilesSearched = addFiles(null, file, SearchCommand.FileType.toLowerCase());
+                    }
+                    int counter = 1;
+
+                    SearchResultsTableModel TableModel = new SearchResultsTableModel();
+                    List<List<Object>> resultsArr = new ArrayList<>();
+                    for (File getFile : FilesSearched) {
+
+                        try (BufferedReader br = new BufferedReader(new FileReader(getFile))) {
+
+                            String fileName = getFile.getAbsolutePath().toString().replace(SearchCommand.ProjectPath, "");
+                            if (!txtKeyword.getText().equals("")) { // if entered search keyword
+
+                                if (fileName.toLowerCase().contains(txtKeyword.getText().toLowerCase())) {
+                                    List<Object> eachObject = new ArrayList<>();
+                                    eachObject.add(getFile.getAbsolutePath());
+                                    eachObject.add("");
+                                    eachObject.add("0");
+                                    eachObject.add(getFile.getParent());
+                                    resultsArr.add(eachObject);
+                                }
+
+                            } else {
+                                List<Object> eachObject = new ArrayList<>();
+                                eachObject.add(getFile.getAbsolutePath());
+                                eachObject.add("");
+                                eachObject.add("0");
+                                eachObject.add(getFile.getParent());
+                                resultsArr.add(eachObject);
+                            }
+
+                        } catch (IOException eIO) {
+                            System.out.println(eIO.getMessage());
+                        }
+                    }
+                    SearchCommand.dataModel = resultsArr;
+                    SearchCommand.convertDataModel();
+
+                    if (NavFrames.SearchResultsFrame != null) {
+                        NavFrames.SearchResultsFrame.dispose();
+                    }
+                    NavFrames.SearchResultsFrame = new SearchResultsForm("Search Results");
+                }
             }
         });
 
@@ -129,149 +278,6 @@ public class MainSearchForm extends JFrame {
 
     public void runSearch() {
 
-        if (SearchCommand.searchIsClicked == false) {
-            SearchCommand.searchIsClicked = true;
-            if (SearchCommand.SearchType == "Text in Files") { // if is text search
-
-                if (txtKeyword.getText() != "") { // if entered search keyword
-
-                    List<File> FilesSearched = new ArrayList<>();
-                    if (SearchCommand.FileType == "ALL") {
-
-                        SearchCommand.FileType = "*";
-                        File file = new File(SearchCommand.FolderPath);
-                        FilesSearched = addFiles(null, file);
-
-                    } else {
-                        File file = new File(SearchCommand.FolderPath);
-                        FilesSearched = addFiles(null, file, SearchCommand.FileType.toLowerCase());
-                    }
-                    int counter = 1;
-
-                    SearchResultsTableModel TableModel = new SearchResultsTableModel();
-                    List<List<Object>> resultsArr = new ArrayList<>();
-                    for (File getFile : FilesSearched) {
-
-                        int lines_count2 = 1;
-                        int lines_count_all = 1;
-                        try (BufferedReader br = new BufferedReader(new FileReader(getFile))) {
-                            int modelCount = 0;
-                            for (String line; (line = br.readLine()) != null; ) {
-                                if (modelCount == 0) {
-
-                                }
-                                boolean isMatch = false;
-                                if (SearchCommand.IsRegex) {
-                                    if (SearchCommand.IsCaseSensitive) {
-                                        Pattern use_pattern = Pattern.compile(".*" + txtKeyword.getText() + ".*");
-                                        isMatch = (use_pattern.matches(".*" + txtKeyword.getText() + ".*", line));
-                                    } else {
-                                        Pattern use_pattern = Pattern.compile(".*" + txtKeyword.getText() + ".*", Pattern.CASE_INSENSITIVE);
-                                        isMatch = (use_pattern.matches(".*" + txtKeyword.getText() + ".*", line));
-                                    }
-                                } else {
-                                    if (SearchCommand.IsCaseSensitive) {
-                                        isMatch = (line.contains(txtKeyword.getText()));
-                                    } else {
-                                        isMatch = (line.toLowerCase().contains(txtKeyword.getText().toLowerCase()));
-                                    }
-                                }
-                                if (isMatch) {
-                                    List<Object> eachObject = new ArrayList<>();
-
-                                    eachObject.add(getFile.getAbsolutePath());
-
-                                    if (SearchCommand.OnlyFileNames == false) {  // if want to see found lines
-                                        eachObject.add(line);
-                                    } else {
-                                        eachObject.add("");
-                                    }
-                                    eachObject.add(lines_count_all);
-
-                                    //System.out.println("abs_file: " + getFile.getAbsoluteFile());
-
-                                    eachObject.add(getFile.getParent());
-                                    resultsArr.add(eachObject);
-
-                                    modelCount++;
-                                    lines_count2++;
-                                    counter++;
-                                }
-                                lines_count_all++;
-                            }
-                        } catch (IOException eIO) {
-                            System.out.println(eIO.getMessage());
-                        }
-                    }
-                    SearchCommand.dataModel = resultsArr;
-                    SearchCommand.convertDataModel();
-
-                    if (NavFrames.SearchResultsFrame != null) {
-                        NavFrames.SearchResultsFrame.dispose();
-                    }
-                    NavFrames.SearchResultsFrame = new SearchResultsForm("Search Results");
-                } else {
-                    JOptionPane.showMessageDialog(MainSearchForm.this, "You did not enter a Search Keyword.");
-                }
-
-            } else {  // if searching names of files
-
-                List<File> FilesSearched = new ArrayList<>();
-                if (SearchCommand.FileType == "ALL") {
-
-                    SearchCommand.FileType = "*";
-                    File file = new File(SearchCommand.FolderPath);
-                    FilesSearched = addFiles(null, file);
-
-                } else {
-                    File file = new File(SearchCommand.FolderPath);
-                    FilesSearched = addFiles(null, file, SearchCommand.FileType.toLowerCase());
-                }
-                int counter = 1;
-
-                SearchResultsTableModel TableModel = new SearchResultsTableModel();
-                List<List<Object>> resultsArr = new ArrayList<>();
-                for (File getFile : FilesSearched) {
-
-                    try (BufferedReader br = new BufferedReader(new FileReader(getFile))) {
-
-                        String fileName = getFile.getAbsolutePath().toString().replace(SearchCommand.ProjectPath, "");
-                        if (txtKeyword.getText() != "") { // if entered search keyword
-
-                            if (fileName.toLowerCase().contains(txtKeyword.getText().toLowerCase())) {
-                                List<Object> eachObject = new ArrayList<>();
-                                eachObject.add(getFile.getAbsolutePath());
-                                eachObject.add("");
-                                eachObject.add("0");
-                                eachObject.add(getFile.getParent());
-                                resultsArr.add(eachObject);
-                            }
-
-                        } else {
-                            List<Object> eachObject = new ArrayList<>();
-                            eachObject.add(getFile.getAbsolutePath());
-                            eachObject.add("");
-                            eachObject.add("0");
-                            eachObject.add(getFile.getParent());
-                            resultsArr.add(eachObject);
-                        }
-
-                    } catch (IOException eIO) {
-                        System.out.println(eIO.getMessage());
-                    }
-                }
-                SearchCommand.dataModel = resultsArr;
-                SearchCommand.convertDataModel();
-
-                if (NavFrames.SearchResultsFrame != null) {
-                    NavFrames.SearchResultsFrame.dispose();
-                }
-                NavFrames.SearchResultsFrame = new SearchResultsForm("Search Results");
-            }
-
-            setTimeout(() -> SearchCommand.searchIsClicked = false, 500);
-
-        }
     }
 
     public static void setTimeout(Runnable runnable, int delay){

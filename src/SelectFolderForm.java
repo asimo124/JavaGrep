@@ -42,9 +42,6 @@ public class SelectFolderForm extends JFrame {
         tree.getSelectionModel().setSelectionMode(
                 TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-        KeyDispatcher ThisKeyDispatcher = new KeyDispatcher();
-        KeyboardFocusManager ThisKbFocusMngr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        ThisKbFocusMngr.addKeyEventDispatcher(ThisKeyDispatcher);
         //return ThisKeyDispatcher;
 
         tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {

@@ -42,9 +42,7 @@ public class SelectProjectForm {
 
     public SelectProjectForm() {
 
-        KeyDispatcher ThisKeyDispatcher = new KeyDispatcher();
-        KeyboardFocusManager ThisKbFocusMngr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        ThisKbFocusMngr.addKeyEventDispatcher(ThisKeyDispatcher);
+
         //return ThisKeyDispatcher;
 
         cboSelProject.addActionListener(new ActionListener() {
